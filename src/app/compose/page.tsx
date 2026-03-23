@@ -1,51 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useT } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 
 export default function ComposePage() {
   const [content, setContent] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [partnerId, setPartnerId] = useState<string | null>(null);
-  const [partnerNickname, setPartnerNickname] = useState("");
+  const { user, profile } = useAuth();
+  const { t } = useT();
 
-  useEffect(() => {
-    async function loadPartner() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("partner_id")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.partner_id) {
-        setPartnerId(profile.partner_id);
-        const { data: partner } = await supabase
-          .from("profiles")
-          .select("nickname")
-          .eq("id", profile.partner_id)
-          .single();
-        if (partner) setPartnerNickname(partner.nickname);
-      }
-    }
-    loadPartner();
-  }, []);
+  const partnerId = profile?.partner_id ?? null;
+  const partnerNickname = profile?.partner_nickname ?? "";
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!partnerId) return;
+    if (!partnerId || !user) return;
     setLoading(true);
     setError("");
 
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
     const { error } = await supabase.from("letters").insert({
       author_id: user.id,
       recipient_id: partnerId,
@@ -53,7 +30,7 @@ export default function ComposePage() {
     });
 
     if (error) {
-      setError("发送失败，请重试 / Failed to send, please try again");
+      setError(t("compose.failed"));
       setLoading(false);
     } else {
       setSent(true);
@@ -65,13 +42,12 @@ export default function ComposePage() {
     return (
       <div className="flex min-h-full items-center justify-center px-4">
         <div className="text-center space-y-4">
-          <p className="text-gray-500">你还没有配对，请先完成配对</p>
-          <p className="text-xs text-gray-400">You haven&apos;t paired yet</p>
+          <p className="text-gray-500">{t("compose.noPair")}</p>
           <a
             href="/pair"
             className="inline-block rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white hover:bg-orange-600"
           >
-            去配对 Go Pair
+            {t("compose.goPair")}
           </a>
         </div>
       </div>
@@ -82,21 +58,20 @@ export default function ComposePage() {
     return (
       <div className="flex min-h-full items-center justify-center px-4">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold">信已送出！Letter Sent!</h1>
-          <p className="text-gray-500">你的信已发送给 {partnerNickname}</p>
-          <p className="text-xs text-gray-400">Your letter has been sent to {partnerNickname}</p>
+          <h1 className="text-2xl font-bold">{t("compose.sent")}</h1>
+          <p className="text-gray-500">{t("compose.sentTo")} {partnerNickname}</p>
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => { setSent(false); setContent(""); }}
               className="rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white hover:bg-orange-600"
             >
-              再写一封 Write Another
+              {t("compose.writeAnother")}
             </button>
             <a
               href="/timeline"
               className="rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium hover:bg-gray-50"
             >
-              时间线 Timeline
+              {t("compose.timeline")}
             </a>
           </div>
         </div>
@@ -106,8 +81,8 @@ export default function ComposePage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="text-xl font-bold mb-1">写信 Compose</h1>
-      <p className="text-sm text-gray-500 mb-6">写给 To {partnerNickname}</p>
+      <h1 className="text-xl font-bold mb-1">{t("compose.title")}</h1>
+      <p className="text-sm text-gray-500 mb-6">{t("compose.to")} {partnerNickname}</p>
 
       <form onSubmit={handleSend} className="space-y-4">
         <textarea
@@ -115,12 +90,12 @@ export default function ComposePage() {
           onChange={(e) => setContent(e.target.value)}
           required
           rows={12}
-          placeholder="想对 TA 说些什么... What would you like to say..."
+          placeholder={t("compose.placeholder")}
           className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-sm leading-relaxed focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none"
         />
 
         <div className="flex justify-between items-center">
-          <span className="text-xs text-gray-400">{content.length} 字 chars</span>
+          <span className="text-xs text-gray-400">{content.length} {t("compose.chars")}</span>
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
 
@@ -129,7 +104,7 @@ export default function ComposePage() {
           disabled={loading || content.trim().length === 0}
           className="w-full rounded-lg bg-orange-500 py-2.5 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50"
         >
-          {loading ? "发送中... Sending..." : "发送 Send"}
+          {loading ? t("compose.loading") : t("compose.submit")}
         </button>
       </form>
     </div>

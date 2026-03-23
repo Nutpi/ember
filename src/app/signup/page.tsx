@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -11,6 +12,7 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { t } = useT();
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -39,15 +41,13 @@ export default function SignupPage() {
     return (
       <div className="flex min-h-full items-center justify-center px-4">
         <div className="w-full max-w-sm space-y-4 text-center">
-          <h1 className="text-2xl font-bold">查看你的邮箱 Check Your Email</h1>
+          <h1 className="text-2xl font-bold">{t("signup.checkEmail")}</h1>
           <p className="text-sm text-gray-500">
-            我们已发送一封验证邮件到 <strong>{email}</strong>，请点击链接完成注册。
-          </p>
-          <p className="text-xs text-gray-400">
-            We&apos;ve sent a verification email. Click the link to complete signup.
+            {t("signup.verificationSent")} <strong>{email}</strong>{" "}
+            {t("signup.clickLink")}
           </p>
           <Link href="/login" className="inline-block text-sm text-orange-500 hover:underline">
-            返回登录 Back to Sign In
+            {t("signup.backToLogin")}
           </Link>
         </div>
       </div>
@@ -58,14 +58,14 @@ export default function SignupPage() {
     <div className="flex min-h-full items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">注册 Sign Up</h1>
-          <p className="mt-1 text-sm text-gray-500">开始你们的信件之旅 Start your letter journey</p>
+          <h1 className="text-2xl font-bold">{t("signup.title")}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t("signup.subtitle")}</p>
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
             <label htmlFor="nickname" className="block text-sm font-medium">
-              昵称 Nickname
+              {t("signup.nickname")}
             </label>
             <input
               id="nickname"
@@ -79,7 +79,7 @@ export default function SignupPage() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium">
-              邮箱 Email
+              {t("signup.email")}
             </label>
             <input
               id="email"
@@ -93,7 +93,7 @@ export default function SignupPage() {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium">
-              密码 Password
+              {t("signup.password")}
             </label>
             <input
               id="password"
@@ -113,14 +113,14 @@ export default function SignupPage() {
             disabled={loading}
             className="w-full rounded-lg bg-orange-500 py-2 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50"
           >
-            {loading ? "注册中... Signing up..." : "注册 Sign Up"}
+            {loading ? t("signup.loading") : t("signup.submit")}
           </button>
         </form>
 
         <p className="text-center text-sm">
-          已有账号？Already have an account?{" "}
+          {t("signup.hasAccount")}
           <Link href="/login" className="text-orange-500 hover:underline">
-            登录 Sign In
+            {t("signup.signIn")}
           </Link>
         </p>
       </div>

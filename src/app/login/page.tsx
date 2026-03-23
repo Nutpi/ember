@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { t } = useT();
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -33,14 +35,14 @@ export default function LoginPage() {
     <div className="flex min-h-full items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">登录 Sign In</h1>
-          <p className="mt-1 text-sm text-gray-500">欢迎回来 Welcome back</p>
+          <h1 className="text-2xl font-bold">{t("login.title")}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t("login.welcome")}</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium">
-              邮箱 Email
+              {t("login.email")}
             </label>
             <input
               id="email"
@@ -54,7 +56,7 @@ export default function LoginPage() {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium">
-              密码 Password
+              {t("login.password")}
             </label>
             <input
               id="password"
@@ -73,20 +75,20 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-lg bg-orange-500 py-2 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50"
           >
-            {loading ? "登录中... Signing in..." : "登录 Sign In"}
+            {loading ? t("login.loading") : t("login.submit")}
           </button>
         </form>
 
         <div className="text-center text-sm space-y-1">
           <p>
             <Link href="/forgot-password" className="text-orange-500 hover:underline">
-              忘记密码？Forgot password?
+              {t("login.forgotPassword")}
             </Link>
           </p>
           <p>
-            还没有账号？Don&apos;t have an account?{" "}
+            {t("login.noAccount")}
             <Link href="/signup" className="text-orange-500 hover:underline">
-              注册 Sign Up
+              {t("login.signUp")}
             </Link>
           </p>
         </div>

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 interface LetterCardProps {
   letter: {
@@ -13,17 +16,22 @@ interface LetterCardProps {
 }
 
 export default function LetterCard({ letter, isMine }: LetterCardProps) {
+  const { t, locale } = useT();
+
   const preview =
     letter.content.length > 80
       ? letter.content.slice(0, 80) + "..."
       : letter.content;
 
-  const date = new Date(letter.created_at).toLocaleDateString("zh-CN", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const date = new Date(letter.created_at).toLocaleDateString(
+    locale === "zh" ? "zh-CN" : "en-US",
+    {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  );
 
   const authorName = letter.author?.nickname ?? "?";
   const recipientName = letter.recipient?.nickname ?? "?";
@@ -39,7 +47,9 @@ export default function LetterCard({ letter, isMine }: LetterCardProps) {
       >
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs text-gray-500">
-            {isMine ? `你 You → ${recipientName}` : `${authorName} → 你 You`}
+            {isMine
+              ? `${t("common.you")} → ${recipientName}`
+              : `${authorName} → ${t("common.you")}`}
           </p>
           <div className="flex items-center gap-2">
             {!isMine && !letter.read_at && (

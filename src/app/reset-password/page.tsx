@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useT } from "@/lib/i18n";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { t } = useT();
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
@@ -30,10 +32,10 @@ export default function ResetPasswordPage() {
     return (
       <div className="flex min-h-full items-center justify-center px-4">
         <div className="w-full max-w-sm space-y-4 text-center">
-          <h1 className="text-2xl font-bold">密码已更新 Password Updated</h1>
-          <p className="text-sm text-gray-500">你的密码已成功重置。Your password has been reset.</p>
+          <h1 className="text-2xl font-bold">{t("reset.success")}</h1>
+          <p className="text-sm text-gray-500">{t("reset.successMsg")}</p>
           <a href="/timeline" className="inline-block text-sm text-orange-500 hover:underline">
-            进入应用 Enter App
+            {t("reset.enterApp")}
           </a>
         </div>
       </div>
@@ -44,14 +46,14 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-full items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">重置密码 Reset Password</h1>
-          <p className="mt-1 text-sm text-gray-500">输入你的新密码 Enter your new password</p>
+          <h1 className="text-2xl font-bold">{t("reset.title")}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t("reset.subtitle")}</p>
         </div>
 
         <form onSubmit={handleUpdate} className="space-y-4">
           <div>
             <label htmlFor="password" className="block text-sm font-medium">
-              新密码 New Password
+              {t("reset.newPassword")}
             </label>
             <input
               id="password"
@@ -71,7 +73,7 @@ export default function ResetPasswordPage() {
             disabled={loading}
             className="w-full rounded-lg bg-orange-500 py-2 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50"
           >
-            {loading ? "更新中... Updating..." : "更新密码 Update Password"}
+            {loading ? t("reset.loading") : t("reset.submit")}
           </button>
         </form>
       </div>

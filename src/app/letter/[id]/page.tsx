@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useT } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 
 interface LetterDetail {
   id: string;
@@ -15,16 +17,16 @@ interface LetterDetail {
 
 export default function LetterPage({ params }: { params: Promise<{ id: string }> }) {
   const [letter, setLetter] = useState<LetterDetail | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
+  const { t, locale } = useT();
 
   useEffect(() => {
+    if (authLoading || !user) return;
+
     async function load() {
       const { id } = await params;
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
 
       const { data } = await supabase
         .from("letters")
@@ -39,22 +41,24 @@ export default function LetterPage({ params }: { params: Promise<{ id: string }>
       if (data) {
         setLetter(data as unknown as LetterDetail);
 
-        if (data.recipient_id === user.id && !data.read_at) {
-          await supabase
+        if (data.recipient_id === user!.id && !data.read_at) {
+          // fire-and-forget
+          supabase
             .from("letters")
             .update({ read_at: new Date().toISOString() })
-            .eq("id", id);
+            .eq("id", id)
+            .then(() => {});
         }
       }
       setLoading(false);
     }
     load();
-  }, [params]);
+  }, [authLoading, user, params]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex min-h-full items-center justify-center">
-        <p className="text-gray-400">加载中... Loading...</p>
+        <p className="text-gray-400">{t("common.loading")}</p>
       </div>
     );
   }
@@ -62,32 +66,37 @@ export default function LetterPage({ params }: { params: Promise<{ id: string }>
   if (!letter) {
     return (
       <div className="flex min-h-full items-center justify-center">
-        <p className="text-gray-500">找不到这封信 Letter not found</p>
+        <p className="text-gray-500">{t("letter.notFound")}</p>
       </div>
     );
   }
 
-  const isMine = letter.author_id === userId;
-  const authorName = letter.author?.nickname ?? "未知";
-  const recipientName = letter.recipient?.nickname ?? "未知";
-  const date = new Date(letter.created_at).toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const isMine = letter.author_id === user?.id;
+  const authorName = letter.author?.nickname ?? t("letter.unknown");
+  const recipientName = letter.recipient?.nickname ?? t("letter.unknown");
+  const date = new Date(letter.created_at).toLocaleString(
+    locale === "zh" ? "zh-CN" : "en-US",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  );
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
       <a href="/timeline" className="text-sm text-orange-500 hover:underline">
-        &larr; 返回时间线 Back to Timeline
+        &larr; {t("letter.backToTimeline")}
       </a>
 
       <div className="mt-6 rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-500">
-            {isMine ? `你写给 You → ${recipientName}` : `${authorName} → 你 You`}
+            {isMine
+              ? `${t("common.you")} → ${recipientName}`
+              : `${authorName} → ${t("common.you")}`}
           </p>
           <time className="text-xs text-gray-400">{date}</time>
         </div>

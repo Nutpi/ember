@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import LetterCard from "@/components/LetterCard";
+import { useT } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 
 interface Letter {
   id: string;
@@ -17,29 +19,21 @@ interface Letter {
 
 export default function TimelinePage() {
   const [letters, setLetters] = useState<Letter[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasPartner, setHasPartner] = useState(true);
+  const { user, profile, loading: authLoading } = useAuth();
+  const { t } = useT();
+
+  const hasPartner = !!profile?.partner_id;
 
   useEffect(() => {
+    if (authLoading || !user) return;
+    if (!hasPartner) {
+      setLoading(false);
+      return;
+    }
+
     async function loadLetters() {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("partner_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.partner_id) {
-        setHasPartner(false);
-        setLoading(false);
-        return;
-      }
-
       const { data } = await supabase
         .from("letters")
         .select(`
@@ -47,7 +41,7 @@ export default function TimelinePage() {
           author:profiles!letters_author_id_fkey(nickname),
           recipient:profiles!letters_recipient_id_fkey(nickname)
         `)
-        .or(`author_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .or(`author_id.eq.${user!.id},recipient_id.eq.${user!.id}`)
         .eq("is_draft", false)
         .order("created_at", { ascending: false });
 
@@ -55,25 +49,27 @@ export default function TimelinePage() {
         setLetters(data as unknown as Letter[]);
 
         const unreadIds = data
-          .filter((l) => l.recipient_id === user.id && !l.read_at)
+          .filter((l) => l.recipient_id === user!.id && !l.read_at)
           .map((l) => l.id);
 
         if (unreadIds.length > 0) {
-          await supabase
+          // fire-and-forget
+          supabase
             .from("letters")
             .update({ read_at: new Date().toISOString() })
-            .in("id", unreadIds);
+            .in("id", unreadIds)
+            .then(() => {});
         }
       }
       setLoading(false);
     }
     loadLetters();
-  }, []);
+  }, [authLoading, user, hasPartner]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex min-h-full items-center justify-center">
-        <p className="text-gray-400">加载中... Loading...</p>
+        <p className="text-gray-400">{t("common.loading")}</p>
       </div>
     );
   }
@@ -82,13 +78,12 @@ export default function TimelinePage() {
     return (
       <div className="flex min-h-full items-center justify-center px-4">
         <div className="text-center space-y-4">
-          <p className="text-gray-500">你还没有配对，先找到你的另一半吧</p>
-          <p className="text-xs text-gray-400">You haven&apos;t paired yet. Find your partner first!</p>
+          <p className="text-gray-500">{t("timeline.noPair")}</p>
           <a
             href="/pair"
             className="inline-block rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white hover:bg-orange-600"
           >
-            去配对 Go Pair
+            {t("timeline.goPair")}
           </a>
         </div>
       </div>
@@ -98,24 +93,23 @@ export default function TimelinePage() {
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">时间线 Timeline</h1>
+        <h1 className="text-xl font-bold">{t("timeline.title")}</h1>
         <a
           href="/compose"
           className="rounded-lg bg-orange-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-600"
         >
-          写信 Compose
+          {t("timeline.compose")}
         </a>
       </div>
 
       {letters.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-400 mb-1">还没有信件，写一封吧！</p>
-          <p className="text-xs text-gray-300 mb-4">No letters yet. Write the first one!</p>
+          <p className="text-gray-400 mb-4">{t("timeline.noLetters")}</p>
           <a
             href="/compose"
             className="text-sm text-orange-500 hover:underline"
           >
-            写第一封信 Write First Letter
+            {t("timeline.writeFirst")}
           </a>
         </div>
       ) : (
@@ -124,7 +118,7 @@ export default function TimelinePage() {
             <LetterCard
               key={letter.id}
               letter={letter}
-              isMine={letter.author_id === userId}
+              isMine={letter.author_id === user!.id}
             />
           ))}
         </div>
