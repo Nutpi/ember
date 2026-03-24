@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/lib/auth";
 import "./globals.css";
@@ -18,12 +19,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Ember",
   description: "一个温暖的双人信件应用",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Ember",
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#F97316",
 };
 
 export default function RootLayout({
@@ -43,6 +54,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
           </AuthProvider>
         </I18nProvider>
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );
