@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import InstallPrompt from "@/components/InstallPrompt";
 import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/lib/auth";
 import "./globals.css";
@@ -55,6 +56,7 @@ export default function RootLayout({
           </AuthProvider>
         </I18nProvider>
         <ServiceWorkerRegistration />
+        <InstallPrompt />
       </body>
     </html>
   );
