@@ -13,6 +13,10 @@ export default function InstallPrompt() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Don't show if user previously dismissed
+    const dismissed = localStorage.getItem("ember-install-dismissed");
+    if (dismissed) return;
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -34,20 +38,21 @@ export default function InstallPrompt() {
   };
 
   const handleDismiss = () => {
+    localStorage.setItem("ember-install-dismissed", "1");
     setVisible(false);
   };
 
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-sm animate-slide-up">
+    <div className="fixed bottom-20 left-4 right-4 z-50 mx-auto max-w-sm animate-slide-up">
       <div className="rounded-2xl border border-orange-500/20 bg-stone-900/95 p-4 shadow-lg backdrop-blur-sm">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10">
             <span className="text-xl">🔥</span>
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-stone-100">安装 Ember</p>
+            <p className="text-sm font-medium text-stone-100">安装心火日记</p>
             <p className="mt-0.5 text-xs text-stone-400">
               安装到桌面，获得更好的体验
             </p>

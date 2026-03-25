@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
+import BottomNav from "@/components/BottomNav";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import InstallPrompt from "@/components/InstallPrompt";
 import { I18nProvider } from "@/lib/i18n";
@@ -18,12 +19,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ember",
-  description: "一个温暖的双人信件应用",
+  title: "心火日记",
+  description: "和最珍贵的人一起收集心火",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Ember",
+    title: "心火日记",
   },
   icons: {
     icon: "/icon.svg",
@@ -52,7 +53,8 @@ export default function RootLayout({
         <I18nProvider>
           <AuthProvider>
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 pb-16">{children}</main>
+            <BottomNav />
           </AuthProvider>
         </I18nProvider>
         <ServiceWorkerRegistration />

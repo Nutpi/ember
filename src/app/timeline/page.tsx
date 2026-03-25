@@ -15,15 +15,39 @@ interface Letter {
   recipient_id: string;
   author: { nickname: string } | null;
   recipient: { nickname: string } | null;
+  letter_images: { count: number }[];
 }
 
 export default function TimelinePage() {
   const [letters, setLetters] = useState<Letter[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, profile, loading: authLoading } = useAuth();
-  const { t } = useT();
+  const { t, locale } = useT();
 
   const hasPartner = !!profile?.partner_id;
+
+  function groupLettersByMonth(letters: Letter[]) {
+    const groups: { key: string; label: string; letters: Letter[] }[] = [];
+    const map = new Map<string, Letter[]>();
+
+    for (const letter of letters) {
+      const d = new Date(letter.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(letter);
+    }
+
+    for (const [key, items] of map) {
+      const [year, month] = key.split("-").map(Number);
+      const label = new Date(year, month - 1).toLocaleDateString(
+        locale === "zh" ? "zh-CN" : "en-US",
+        { year: "numeric", month: "long" }
+      );
+      groups.push({ key, label, letters: items });
+    }
+
+    return groups;
+  }
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -34,16 +58,39 @@ export default function TimelinePage() {
 
     async function loadLetters() {
       const supabase = createClient();
-      const { data } = await supabase
+
+      // Try with letter_images count; fall back without if table doesn't exist yet
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: any[] | null = null;
+
+      const withImages = await supabase
         .from("letters")
         .select(`
           id, content, created_at, read_at, author_id, recipient_id,
           author:profiles!letters_author_id_fkey(nickname),
-          recipient:profiles!letters_recipient_id_fkey(nickname)
+          recipient:profiles!letters_recipient_id_fkey(nickname),
+          letter_images(count)
         `)
         .or(`author_id.eq.${user!.id},recipient_id.eq.${user!.id}`)
         .eq("is_draft", false)
         .order("created_at", { ascending: false });
+
+      if (withImages.error) {
+        // letter_images table may not exist yet, retry without it
+        const withoutImages = await supabase
+          .from("letters")
+          .select(`
+            id, content, created_at, read_at, author_id, recipient_id,
+            author:profiles!letters_author_id_fkey(nickname),
+            recipient:profiles!letters_recipient_id_fkey(nickname)
+          `)
+          .or(`author_id.eq.${user!.id},recipient_id.eq.${user!.id}`)
+          .eq("is_draft", false)
+          .order("created_at", { ascending: false });
+        data = withoutImages.data;
+      } else {
+        data = withImages.data;
+      }
 
       if (data) {
         setLetters(data as unknown as Letter[]);
@@ -92,14 +139,8 @@ export default function TimelinePage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h1 className="text-xl font-bold">{t("timeline.title")}</h1>
-        <a
-          href="/compose"
-          className="rounded-lg bg-orange-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-600"
-        >
-          {t("timeline.compose")}
-        </a>
       </div>
 
       {letters.length === 0 ? (
@@ -113,13 +154,23 @@ export default function TimelinePage() {
           </a>
         </div>
       ) : (
-        <div className="space-y-4">
-          {letters.map((letter) => (
-            <LetterCard
-              key={letter.id}
-              letter={letter}
-              isMine={letter.author_id === user!.id}
-            />
+        <div className="space-y-2">
+          {groupLettersByMonth(letters).map((group) => (
+            <div key={group.key}>
+              <div className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm -mx-4 px-4 py-2">
+                <h2 className="text-sm font-semibold text-gray-500">{group.label}</h2>
+              </div>
+              <div className="space-y-4 mt-2">
+                {group.letters.map((letter) => (
+                  <LetterCard
+                    key={letter.id}
+                    letter={letter}
+                    isMine={letter.author_id === user!.id}
+                    hasImages={letter.letter_images?.[0]?.count > 0}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}

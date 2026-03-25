@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 
@@ -238,7 +239,15 @@ export default function SettingsPage() {
             )}
           </>
         ) : (
-          <p className="text-sm text-gray-500">{t("settings.notPaired")}</p>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-500">{t("settings.notPaired")}</p>
+            <Link
+              href="/pair"
+              className="inline-block rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600"
+            >
+              {t("settings.goPair")}
+            </Link>
+          </div>
         )}
         {unpairMsg && (
           <p className={`text-sm ${unpairFailed ? "text-red-600" : "text-green-600"}`}>
@@ -246,6 +255,18 @@ export default function SettingsPage() {
           </p>
         )}
       </section>
+
+      {/* 退出登录 */}
+      <button
+        onClick={async () => {
+          const supabase = createClient();
+          await supabase.auth.signOut();
+          window.location.href = "/";
+        }}
+        className="w-full rounded-lg border border-red-300 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+      >
+        {t("settings.logout")}
+      </button>
     </div>
   );
 }

@@ -9,7 +9,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
       <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-        <span className="text-orange-500">Ember</span>
+        <span className="text-orange-500">心火日记</span>
       </h1>
       <p className="mt-4 max-w-md text-lg text-gray-500">
         {t("home.tagline")}

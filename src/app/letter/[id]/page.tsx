@@ -15,9 +15,17 @@ interface LetterDetail {
   recipient: { nickname: string } | null;
 }
 
+interface LetterImage {
+  id: string;
+  storage_path: string;
+  display_order: number;
+}
+
 export default function LetterPage({ params }: { params: Promise<{ id: string }> }) {
   const [letter, setLetter] = useState<LetterDetail | null>(null);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
   const { t, locale } = useT();
 
@@ -42,12 +50,31 @@ export default function LetterPage({ params }: { params: Promise<{ id: string }>
         setLetter(data as unknown as LetterDetail);
 
         if (data.recipient_id === user!.id && !data.read_at) {
-          // fire-and-forget
           supabase
             .from("letters")
             .update({ read_at: new Date().toISOString() })
             .eq("id", id)
             .then(() => {});
+        }
+
+        // Load images
+        const { data: images } = await supabase
+          .from("letter_images")
+          .select("id, storage_path, display_order")
+          .eq("letter_id", id)
+          .order("display_order");
+
+        if (images && images.length > 0) {
+          const urls: string[] = [];
+          for (const img of images as LetterImage[]) {
+            const { data: signedData } = await supabase.storage
+              .from("letter-images")
+              .createSignedUrl(img.storage_path, 3600);
+            if (signedData?.signedUrl) {
+              urls.push(signedData.signedUrl);
+            }
+          }
+          setImageUrls(urls);
         }
       }
       setLoading(false);
@@ -104,7 +131,46 @@ export default function LetterPage({ params }: { params: Promise<{ id: string }>
         <div className="whitespace-pre-wrap text-sm leading-relaxed">
           {letter.content}
         </div>
+
+        {imageUrls.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {imageUrls.map((url, i) => (
+              <button
+                key={i}
+                onClick={() => setViewingImage(url)}
+                className="overflow-hidden rounded-lg"
+              >
+                <img
+                  src={url}
+                  alt=""
+                  className="h-40 w-full object-cover transition hover:opacity-90"
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Fullscreen image overlay */}
+      {viewingImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setViewingImage(null)}
+        >
+          <button
+            onClick={() => setViewingImage(null)}
+            className="absolute right-4 top-4 text-2xl text-white hover:text-gray-300"
+          >
+            &times;
+          </button>
+          <img
+            src={viewingImage}
+            alt=""
+            className="max-h-full max-w-full rounded-lg object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

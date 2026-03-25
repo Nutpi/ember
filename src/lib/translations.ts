@@ -7,8 +7,8 @@ const translations = {
 
   // Home
   "home.tagline": {
-    zh: "写给重要的人。一个温暖的双人信件应用，用文字传递心意。",
-    en: "Write to someone who matters. A warm letter app for two, delivering feelings through words.",
+    zh: "和最珍贵的人一起收集心火。",
+    en: "Collect embers with the one who matters most.",
   },
   "home.getStarted": { zh: "开始使用", en: "Get Started" },
   "home.signIn": { zh: "登录", en: "Sign In" },
@@ -21,6 +21,11 @@ const translations = {
   "header.logout": { zh: "退出", en: "Logout" },
   "header.signIn": { zh: "登录", en: "Sign In" },
   "header.signUp": { zh: "注册", en: "Sign Up" },
+
+  // Bottom Nav
+  "nav.timeline": { zh: "时间线", en: "Timeline" },
+  "nav.compose": { zh: "写信", en: "Compose" },
+  "nav.settings": { zh: "设置", en: "Settings" },
 
   // Login
   "login.title": { zh: "登录", en: "Sign In" },
@@ -78,6 +83,8 @@ const translations = {
   "compose.loading": { zh: "发送中...", en: "Sending..." },
   "compose.submit": { zh: "发送", en: "Send" },
   "compose.failed": { zh: "发送失败，请重试", en: "Failed to send, please try again" },
+  "compose.addImage": { zh: "添加图片", en: "Add image" },
+  "compose.imageTooLarge": { zh: "图片不能超过 5MB", en: "Image must be under 5MB" },
 
   // Timeline
   "timeline.title": { zh: "时间线", en: "Timeline" },
@@ -152,6 +159,8 @@ const translations = {
   "settings.notPaired": { zh: "未配对", en: "Not paired" },
   "settings.unpairFailed": { zh: "解除失败", en: "Unpair failed" },
   "settings.unpaired": { zh: "已解除配对", en: "Unpaired" },
+  "settings.goPair": { zh: "去配对", en: "Go Pair" },
+  "settings.logout": { zh: "退出登录", en: "Log Out" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
